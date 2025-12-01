@@ -20,6 +20,10 @@
       :accounts="existingAccounts"
       @clear-accounts="clearAccounts"
     />
+
+    <FingerprintDetails
+      :fingerprintData="fullFingerprintData"
+    />
   </div>
 </template>
 
@@ -29,8 +33,10 @@ import { getThumbmark } from '@thumbmarkjs/thumbmarkjs'
 import FingerprintDisplay from './components/FingerprintDisplay.vue'
 import RegistrationForm from './components/RegistrationForm.vue'
 import AccountsList from './components/AccountsList.vue'
+import FingerprintDetails from './components/FingerprintDetails.vue'
 
 const fingerprint = ref(null)
+const fullFingerprintData = ref(null)
 const isLoadingFingerprint = ref(true)
 const existingAccounts = ref([])
 
@@ -72,12 +78,21 @@ onMounted(async () => {
 
     const result = await Promise.race([thumbmarkPromise, timeoutPromise])
     console.log('Fingerprint generated:', result)
+
+    // Store the full fingerprint data
+    fullFingerprintData.value = result
+
     // Extract the thumbmark string from the result object
     fingerprint.value = result.thumbmark || result
   } catch (error) {
     console.error('Failed to get fingerprint:', error)
     // Generate a fallback fingerprint
     fingerprint.value = 'fallback-' + Math.random().toString(36).substring(7)
+    fullFingerprintData.value = {
+      thumbmark: fingerprint.value,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    }
   } finally {
     isLoadingFingerprint.value = false
   }
